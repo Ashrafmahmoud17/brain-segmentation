@@ -115,7 +115,6 @@ scikit-learn
 
 ## 👤 Author
 
-**Ashraf Mohamed**  
-Student ID: 223101103  
+**Ashraf Mahmoud**  
 New Mansoura University — Neural Networks & Deep Learning  
 Academic Year 2024–2025
