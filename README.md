@@ -1,203 +1,121 @@
-🦷 Dental Clinic Management System
-Python + Tkinter + SQLite | Full Desktop Application
-📌 Overview
+# 🧠 Brain Tumor Segmentation — Web App
 
-A complete desktop dental clinic management system built with Python and Tkinter. The system covers the full patient lifecycle — from registration and appointment scheduling to visit tracking, treatment recording, billing, and financial reporting — all backed by a local SQLite database.
-🖥️ Application Screenshots
-Screen 	Description
-Login 	Secure username/password authentication
-Dashboard 	Overview with live patient & visit stats
-Patients 	Full patient records management
-Appointments 	Interactive calendar with scheduling
-Visits 	Daily visit tracking per doctor
-Payments 	Invoice creation and billing
-Patient History 	Full financial report per patient
-🗂️ Project Structure
+A Flask-based web application for **brain tumor segmentation** using a deep learning model (U-Net / ResU-Net) trained on MRI brain scans. Upload an MRI image and get back a predicted tumor mask with a color overlay.
 
-dental-clinic/
-│
-├── log_c.py                  # ✅ Main entry point (recommended)
-├── db.py                     # Database connection manager
-├── database.sql              # Database schema (all tables)
-├── init_db.py                # Initialize the database
-│
-├── patients.py               # Patient management module
-├── appointments.py           # Appointment calendar module
-├── visits.py                 # Visit tracking module
-├── payments.py               # Billing & invoices module
-├── history_of_patients.py    # Financial history per patient
-│
-└── clinic.db                 # SQLite database file (auto-created)
+---
 
-⚙️ Requirements
-Python Version
+## 📁 Project Structure
 
-Python 3.8+
+```
+project/
+├── app.py                  # Flask application
+├── my_modelV2.keras        # Trained segmentation model
+├── static/
+│   ├── uploads/            # Uploaded MRI images
+│   └── results/            # Generated masks and overlays
+├── templates/
+│   └── index.html          # Frontend HTML template
+└── README.md
+```
 
-Libraries
+---
 
-All libraries are built into Python — no pip install needed:
+## 🚀 Getting Started
 
-tkinter      # GUI framework (built-in)
-sqlite3      # Database (built-in)
-datetime     # Date handling (built-in)
-calendar     # Calendar widget (built-in)
-re           # Phone validation (built-in)
-pickle       # Not used in core app
+### 1. Clone the repository
 
-🚀 Getting Started
-Step 1 — Initialize the Database
+```bash
+git clone https://github.com/your-username/brain-tumor-segmentation.git
+cd brain-tumor-segmentation
+```
 
-Run this once to create all tables:
+### 2. Install dependencies
 
-python init_db.py
+```bash
+pip install flask tensorflow opencv-python numpy
+```
 
-Output:
+### 3. Add your trained model
 
-Connected to SQLite ✅
-Database Created ✅
+Place your trained `.keras` or `.h5` model file in the root directory and update the path in `app.py`:
 
-Step 2 — Create Admin User
+```python
+model = tf.keras.models.load_model("my_modelV2.keras", compile=False)
+```
 
-In db.py, the create_admin_user() function creates the default admin:
+### 4. Run the app
 
-Username: admin
-Password: admin123
+```bash
+python app.py
+```
 
-Run it once:
+Then open your browser at `http://127.0.0.1:5000`
 
-python db.py
+---
 
-Step 3 — Launch the Application
+## 🧩 How It Works
 
-python log_c.py
+1. **Upload** an MRI brain scan image (`.jpg`, `.png`)
+2. The image is **preprocessed** → resized to 256×256 and normalized
+3. The model **predicts** a binary segmentation mask
+4. The mask is **thresholded** at 0.5 and overlaid on the original image in green
+5. Results are displayed: original image, mask, and overlay
 
-🗄️ Database Schema
+---
 
-patients          → Core patient records
-appointments      → Scheduled appointments (linked to patients)
-visits            → Actual clinic visits (linked to patients)
-treatments        → Dental procedures per visit
-bills             → Invoices per visit
-bill_items        → Individual services per invoice
-payments          → Payment transactions per bill
-dental_chart      → Tooth status per patient
-users             → System login credentials
+## 🏗️ Model Architecture
 
-Key Relationships
+Two models were trained and evaluated:
 
-patients ──┬── appointments
-           ├── visits ──┬── treatments
-           │            └── bills ──┬── bill_items
-           │                        └── payments
-           └── dental_chart
+| Version | Architecture | Loss Function | Notes |
+|---------|-------------|---------------|-------|
+| V1 | ResU-Net (ResNet50 backbone) | BCE + Dice Loss | Pretrained ImageNet weights |
+| V2 | U-Net (from scratch) | Focal Loss + Dice Loss | With augmentation |
 
-All foreign keys use ON DELETE CASCADE — deleting a patient removes all their linked records automatically.
-📋 Modules Guide
-👥 Patients (patients.py)
+### Training Details
 
-    Add, update, delete patient records
-    Fields: Name, Age, Gender, Phone, Address, Medical History
-    Egyptian phone number validation (01[0125]XXXXXXXX)
-    Live search by name
-    Duplicate detection (same name + address)
+| Parameter | Value |
+|-----------|-------|
+| Input size | 256 × 256 × 3 |
+| Batch size | 8 |
+| Optimizer | Adam (lr = 1e-4) |
+| Epochs | up to 30 (early stopping) |
+| Train / Val / Test split | 80% / 10% / 10% |
 
-📅 Appointments (appointments.py)
+### Loss Functions
 
-    Interactive monthly calendar view
-    Color coding:
-        🟢 Green = has appointments
-        ⬜ Gray = empty day
-        🔴 Red = 5+ appointments
-    Smart patient name autocomplete
-    Filter by status: Scheduled / Completed / Cancelled
-    Visit types: General, Consultation, Follow-up, Emergency
+- **Dice Loss** — measures overlap between predicted and ground truth masks
+- **Focal Loss** — handles class imbalance (tumor pixels are rare)
+- **Combined Loss** = Focal Loss + (1 − Dice Coefficient)
 
-🏥 Visits (visits.py)
+---
 
-    Record daily patient visits with doctor name
-    Date format: YYYY-MM-DD
-    Linked to patient records
-    Sorted by date (newest first)
+## 📊 Dataset
 
-💳 Payments (payments.py)
+- **Source:** [Brain Tumor Segmentation — Kaggle](https://www.kaggle.com/datasets/nikhilroxtomar/brain-tumor-segmentation)
+- **Format:** paired MRI images + binary segmentation masks
+- **Augmentation:** horizontal flip, vertical flip (training only)
 
-    Create itemized invoices per visit
-    Add multiple services with prices
-    Track: Total amount / Paid amount / Remaining balance
-    Payment methods: Cash / Card / Transfer
-    Auto-calculates remaining balance
+---
 
-📜 Patient History (history_of_patients.py)
+## 📦 Dependencies
 
-    Smart search with autocomplete dropdown
-    Financial summary cards:
-        Total treatment cost
-        Total paid
-        Remaining debt
-    Three detailed tables:
-        Bills history
-        Treatment procedures
-        Payment transactions
+```
+flask
+tensorflow >= 2.x
+opencv-python
+numpy
+matplotlib
+scikit-learn
+```
 
-📊 Dashboard (log_c.py)
 
-    Live stats with auto-refresh every 3 seconds
-    Total Patients counter
-    Today's Visits (falls back to last recorded date if no visits today)
-    System Status indicator
 
-🔐 Login Versions
+---
 
-The project has multiple login UI versions developed iteratively:
-File 	Dashboard Style 	Stats
-log_c.py 	Sidebar + Stats cards 	✅ Live auto-refresh
-log_g.py 	Sidebar + Stats cards 	✅ Auto-refresh
-log2.py 	Sidebar 	Static
-login.py 	Card grid layout 	None
-login1.py 	Simple buttons 	None
+## 👤 Author
 
-    Use log_c.py — it is the most complete version.
-
-🎛️ Configuration
-Change Database File
-
-In db.py:
-
-conn = sqlite3.connect("clinic.db")   # Change filename here
-
-Change Auto-Refresh Rate
-
-In log_c.py:
-
-dash.after(3000, auto_refresh)   # 3000ms = 3 seconds
-
-Change Default Admin Credentials
-
-In db.py:
-
-username = "admin"
-password = "admin123"
-
-🔧 Common Issues & Fixes
-"No module named tkinter"
-
-# Ubuntu/Debian
-sudo apt-get install python3-tk
-
-# macOS
-brew install python-tk
-
-Database not found
-
-python init_db.py   # Run this first
-
-Stats showing 0 visits
-
-The visit date must be stored as YYYY-MM-DD. Check that the date field in the Visits form matches today's date format.
-👤 Author
-
-Ashraf Mahmoud Computer Sciences — New Mansoura University
-📄 License
-
-This project is for educational purposes.
+**Ashraf Mohamed**  
+Student ID: 223101103  
+New Mansoura University — Neural Networks & Deep Learning  
+Academic Year 2024–2025
